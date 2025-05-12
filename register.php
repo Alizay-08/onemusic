@@ -1,8 +1,36 @@
 <?php
+session_start();
+include 'connection.php'; // Make sure getDB() is defined here
 
-include("connection.php")
+$db = getDB(); // Connect to DB
 
+// Check form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get inputs safely
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    // Fetch user by email
+    $query = "SELECT * FROM users WHERE email = :email LIMIT 1";
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(':email', $email);
+    $stmt->execute();
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Match password
+    if ($user && $password === $user['password']) {
+        $_SESSION['user_id'] = $user['user_id']; // Adjust column name if different
+        $_SESSION['email'] = $user['email'];
+        header("Location: user/home.php");
+        exit;
+    } else {
+        $error = "Invalid email or password!";
+    }
+}
 ?>
+
+<!-- php-end -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -158,22 +186,7 @@ include("connection.php")
         </div>
     </section>
     <!-- ##### Login Area End ##### -->
-    <?php
 
-include 'connection.php';
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hashing password
-
-    $sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$username, $email, $password]);
-
-    echo "Registration successful!";
-}
-?>
     <!-- ##### Footer Area Start ##### -->
     <footer class="footer-area">
         <div class="container">
